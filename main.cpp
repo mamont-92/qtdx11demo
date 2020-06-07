@@ -95,6 +95,7 @@ static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const Coords & coords)
 {
     WNDCLASSEX wndClass;
+    memset(&wndClass, 0, sizeof(wndClass));
 
     wndClass.style = CS_HREDRAW | CS_VREDRAW;
     wndClass.cbSize = sizeof(wndClass);
@@ -108,8 +109,12 @@ std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlag
     wndClass.lpszClassName = g_className;
     wndClass.lpfnWndProc = wndCallback;
 
-    if (RegisterClassEx(&wndClass) == WINAPI_FAILED)
+    if (RegisterClassEx(&wndClass) == WINAPI_FAILED){
+        //auto regError = GetLastError();
         return std::make_tuple(CreateResult::RegisterClassFailed, nullptr);
+    }
+
+
 
     auto styleFlags = WS_SYSMENU | WS_SIZEBOX;
 
@@ -185,14 +190,16 @@ std::tuple<CreateResult, DXInfo> initD3D(HWND hWnd)
     };
 
     DXGI_SWAP_CHAIN_DESC swapChainDesc;
-    swapChainDesc.BufferCount = 2;
+    memset(&swapChainDesc, 0, sizeof(swapChainDesc));
+    swapChainDesc.BufferCount = 1;
     swapChainDesc.BufferDesc.Width = wndCoords.right - wndCoords.left;
     swapChainDesc.BufferDesc.Height = wndCoords.bottom - wndCoords.top;
     swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
     swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SampleDesc.Count = 0;
+    swapChainDesc.OutputWindow = hWnd;
+    swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.Windowed = TRUE;
 
