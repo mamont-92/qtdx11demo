@@ -17,6 +17,11 @@ static const wchar_t g_className[] = L"DX Windowd Class";
 std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const RECT & coords);
 int startAppLoop();
 
+static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
 } //namespace wnd
 
 
@@ -47,7 +52,7 @@ std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlag
     wndClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW);
     wndClass.lpszMenuName = nullptr;
     wndClass.lpszClassName = g_className;
-    wndClass.lpfnWndProc = nullptr;
+    wndClass.lpfnWndProc = wndCallback;
 
     if (RegisterClassEx(&wndClass) == WINAPI_FAILED)
         return std::make_tuple(CreateResult::RegisterClassFailed, nullptr);
