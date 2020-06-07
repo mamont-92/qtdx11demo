@@ -3,6 +3,8 @@
 
 #include <tuple>
 
+
+
 namespace wnd {
 
 enum class CreateResult{
@@ -11,15 +13,35 @@ enum class CreateResult{
     CreateInstanceFailed
 };
 
+inline static LPCWSTR toErrorStr(CreateResult val)
+{
+    switch (val) {
+    case CreateResult::OK:
+        return L"OK";
+    case CreateResult::RegisterClassFailed:
+        return L"Failed registering window class!";
+    case CreateResult::CreateInstanceFailed:
+        return L"Failed creation window instance!";
+    }
+    return L"Unknown error!";
+}
+
 constexpr ATOM WINAPI_FAILED = 0;
 static const wchar_t g_className[] = L"DX Windowd Class";
 
 std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const RECT & coords);
 int startAppLoop();
 
+
 static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+template<typename T>
+void showMessageError(T errorVal)
+{
+    MessageBox(nullptr, toErrorStr(errorVal) , L"error!", MB_ICONERROR);
 }
 
 } //namespace wnd
@@ -28,9 +50,12 @@ static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 //-------------main--func------------------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance, [[maybe_unused]] LPSTR cmdStr, int cmdShowFlags)
 {
-    auto [createResult, wndDesc] = wnd::createWindow(hInstance, cmdShowFlags, L"DX11 Hello!", {0, 0, 640, 480});
-    if (createResult != wnd::CreateResult::OK)
+    RECT wndRect {0, 0, 800, 600};
+    auto [createResult, wndDesc] = wnd::createWindow(hInstance, cmdShowFlags, L"DX11 Hello!", wndRect);
+    if (createResult != wnd::CreateResult::OK){
+        wnd::showMessageError(createResult);
         return 1;
+    }
 
     return wnd::startAppLoop();
 }
