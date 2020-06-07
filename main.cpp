@@ -1,5 +1,6 @@
 #include <tuple>
 #include <array>
+#include <functional>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -19,7 +20,7 @@ constexpr ATOM WINAPI_FAILED = 0;
 static const wchar_t g_className[] = L"DX Windowd Class";
 
 std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const Coords & coords);
-int startAppLoop();
+int startAppLoop(std::function<void()> func);
 
 template<typename T>
 void showMessageError(T errorVal)
@@ -68,7 +69,14 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
         return 1;
     }
 
-    return wnd::startAppLoop();
+    auto dxRef = std::ref(dxInfo);
+    auto renderFunc = [dxRef](){
+        std::array<float, 4> clearColor {0.3f, 0.5f, 0.6f, 0.0f};
+        dxRef.get().immediateContexPtr->ClearRenderTargetView(dxRef.get().renderTargetPtr, clearColor.data());
+        dxRef.get().swapChainPtr->Present(0, 0);
+    };
+
+    return wnd::startAppLoop(renderFunc); //empty lambda
 }
 //-----------------------------------------------------------------------------------------------------------
 
@@ -89,6 +97,10 @@ inline static LPCWSTR toErrorStr(CreateResult val)
 
 static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (uMsg == WM_DESTROY){
+        PostQuitMessage(0);
+        return 0;
+    }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -110,11 +122,9 @@ std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlag
     wndClass.lpfnWndProc = wndCallback;
 
     if (RegisterClassEx(&wndClass) == WINAPI_FAILED){
-        //auto regError = GetLastError();
+        //auto regError = GetLastError(); //place for log
         return std::make_tuple(CreateResult::RegisterClassFailed, nullptr);
     }
-
-
 
     auto styleFlags = WS_SYSMENU | WS_SIZEBOX;
 
@@ -129,7 +139,7 @@ std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlag
     return std::make_tuple(CreateResult::OK, wndHandle);
 }
 
-int startAppLoop()
+int startAppLoop(std::function<void()> func)
 {
     MSG msg;
     std::memset(&msg, 0, sizeof(msg));
@@ -139,6 +149,7 @@ int startAppLoop()
             DispatchMessage(&msg);
         }
         else {
+            func();
             //do something while idle
         }
     }
