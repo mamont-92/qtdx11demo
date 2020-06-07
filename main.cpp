@@ -1,11 +1,11 @@
-//#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <tuple>
 
-
-
 namespace wnd {
+
+using Coords = RECT;
 
 enum class CreateResult{
     OK = 0,
@@ -29,14 +29,8 @@ inline static LPCWSTR toErrorStr(CreateResult val)
 constexpr ATOM WINAPI_FAILED = 0;
 static const wchar_t g_className[] = L"DX Windowd Class";
 
-std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const RECT & coords);
+std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const Coords & coords);
 int startAppLoop();
-
-
-static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
 
 template<typename T>
 void showMessageError(T errorVal)
@@ -50,8 +44,8 @@ void showMessageError(T errorVal)
 //-------------main--func------------------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance, [[maybe_unused]] LPSTR cmdStr, int cmdShowFlags)
 {
-    RECT wndRect {0, 0, 800, 600};
-    auto [createResult, wndDesc] = wnd::createWindow(hInstance, cmdShowFlags, L"DX11 Hello!", wndRect);
+    wnd::Coords wndCoords {0, 0, 800, 600};
+    auto [createResult, wndDesc] = wnd::createWindow(hInstance, cmdShowFlags, L"DX11 Hello!", wndCoords);
     if (createResult != wnd::CreateResult::OK){
         wnd::showMessageError(createResult);
         return 1;
@@ -63,7 +57,12 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
 
 namespace wnd {
 
-std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const RECT & coords)
+static LRESULT CALLBACK wndCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+std::tuple<CreateResult, HWND> createWindow(HINSTANCE hInstance, int cmdShowFlags, LPCWSTR title, const Coords & coords)
 {
     WNDCLASSEX wndClass;
 
