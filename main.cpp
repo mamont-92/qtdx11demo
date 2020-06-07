@@ -233,6 +233,9 @@ std::tuple<CreateResult, DXInfo> initD3D(HWND hWnd)
 
     resultInfo.immediateContexPtr->OMSetRenderTargets(1, &resultInfo.renderTargetPtr, nullptr);
     resultInfo.immediateContexPtr->RSSetViewports(1, &resultInfo.viewPort);
+    std::array<float, 4> clearColor {0.3f, 0.5f, 0.6f, 0.0f};
+    resultInfo.immediateContexPtr->ClearRenderTargetView(resultInfo.renderTargetPtr, clearColor.data());
+    resultInfo.swapChainPtr->Present(0, 0);
 
     return std::make_tuple(CreateResult::OK, resultInfo);
 }
